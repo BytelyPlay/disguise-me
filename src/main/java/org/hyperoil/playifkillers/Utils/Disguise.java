@@ -63,12 +63,9 @@ public class Disguise {
             if (disguiseTask != null) return;
             Location locWhereToSpawn = disguiser.getLocation();
             if (locWhereToSpawn.getWorld() == null || entityType == null) return;
-            Entity[] entitySpawned = {disguiseEntity};
             if (disguiseEntity == null) {
-                entitySpawned[0] = locWhereToSpawn.getWorld().spawnEntity(locWhereToSpawn, entityType);
-                disguiseEntity = entitySpawned[0];
-                if (entitySpawned[0] instanceof LivingEntity) {
-                    LivingEntity livingEntity = (LivingEntity) disguiseEntity;
+                disguiseEntity = locWhereToSpawn.getWorld().spawnEntity(locWhereToSpawn, entityType);
+                if (disguiseEntity instanceof LivingEntity livingEntity) {
                     livingEntity.setAI(false);
                 }
                 disguiser.hideEntity(disguiseMe.getInstance(), disguiseEntity);
@@ -81,34 +78,29 @@ public class Disguise {
 
     private BukkitTask createDisguiseTask() {
         Location locWhereToSpawn = disguiser.getLocation();
-        Entity[] entitySpawned = {disguiseEntity};
         return Bukkit.getScheduler().runTaskTimer(disguiseMe.getInstance(), () -> {
             if (!disguiser.isOnline()) {
                 this.disableDisguise();
                 return;
             }
-            Entity entitySpawnedNonArray = entitySpawned[0];
-            if (entitySpawnedNonArray.isDead()) {
+            if (this.disguiseEntity.isDead()) {
                 if (isReadyToDieAgain) {
                     disguiser.setHealth(0);
                     isReadyToDieAgain=false;
                 }
                 if (disguiser.isDead()) return;
-                entitySpawnedNonArray = locWhereToSpawn.getWorld().spawnEntity(disguiser.getLocation(), entityType);
-                if (entitySpawnedNonArray instanceof LivingEntity livingEntity) {
+                this.disguiseEntity = locWhereToSpawn.getWorld().spawnEntity(disguiser.getLocation(), entityType);
+                if (this.disguiseEntity instanceof LivingEntity livingEntity) {
                     livingEntity.setAI(false);
                 }
-                disguiseEntity = entitySpawnedNonArray;
                 disguiser.hideEntity(disguiseMe.getInstance(), disguiseEntity);
-                entitySpawned[0] = entitySpawnedNonArray;
             }
-            entitySpawnedNonArray.setInvulnerable((disguiser.isInvulnerable() || disguiser.getGameMode() == GameMode.CREATIVE || disguiser.getGameMode() == GameMode.SPECTATOR));
-            if (entitySpawnedNonArray instanceof LivingEntity livingEntity) {
+            if (this.disguiseEntity instanceof LivingEntity livingEntity) {
                 disguiser.setHealth(livingEntity.getHealth());
             } else {
                 disguiser.setHealth(disguiser.getAttribute(Attribute.MAX_HEALTH).getValue());
             }
-            entitySpawnedNonArray.teleport(disguiser.getLocation());
+            this.disguiseEntity.teleport(disguiser.getLocation());
         }, 1, 1);
     }
 
@@ -140,11 +132,19 @@ public class Disguise {
         disguiseTeam.unregister();
     }
 
+    public Boolean isDisguiseEnabled() {
+        return this.disguiseTask != null;
+    }
+
     public static Disguise getDisguise(Player p) {
         return playerUUIDAndDisguise.get(p);
     }
 
     public static Disguise[] getAllDisguises() {
         return playerUUIDAndDisguise.values().toArray(new Disguise[0]);
+    }
+
+    public Entity getDisguiseEntity() {
+        return this.disguiseEntity;
     }
 }
