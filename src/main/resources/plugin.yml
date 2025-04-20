@@ -1,0 +1,17 @@
+name: DisguiseMe
+version: '1.0-SNAPSHOT'
+main: org.hyperoil.playifkillers.disguiseMe
+api-version: '1.21'
+# softdepend: ["PlaceholderAPI"]
+# depend: ["ProtocolLib"]
+commands:
+  disguise:
+    description: disguise as something or someone...
+    usage: /disguise <EntityType>
+  undisguise:
+    description: undisguise
+    usage: /undisguise
+permissions:
+  disguiseme.disguise:
+    description: as the name suggests.
+    default: op
