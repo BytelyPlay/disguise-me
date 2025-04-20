@@ -10,8 +10,10 @@ import org.hyperoil.playifkillers.disguiseMe;
 public class PlayerRespawnDisguise implements Listener {
     @EventHandler
     public void onPlayerRespawnEvent(PlayerRespawnEvent e) {
+        Disguise dis = Disguise.getDisguise(e.getPlayer());
+        if (dis == null) return;
         Bukkit.getScheduler().runTaskLater(disguiseMe.getInstance(), () -> {
-            Disguise.getDisguise(e.getPlayer()).isReadyToDieAgain = true;
+            dis.isReadyToDieAgain = true;
         }, 20);
     }
 }

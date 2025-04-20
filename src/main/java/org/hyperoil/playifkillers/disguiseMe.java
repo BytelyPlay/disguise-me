@@ -8,6 +8,7 @@ import org.hyperoil.playifkillers.Commands.disguiseCommand;
 import org.hyperoil.playifkillers.Commands.undisguiseCommand;
 import org.hyperoil.playifkillers.Listeners.EntityDamageEventForDisguise;
 import org.hyperoil.playifkillers.Listeners.HideDisguisedPlayers;
+import org.hyperoil.playifkillers.Listeners.NoEntityTargetting;
 import org.hyperoil.playifkillers.Listeners.PlayerRespawnDisguise;
 import org.hyperoil.playifkillers.Utils.Disguise;
 
@@ -27,6 +28,7 @@ public final class disguiseMe extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new HideDisguisedPlayers(), this);
         getServer().getPluginManager().registerEvents(new PlayerRespawnDisguise(), this);
         getServer().getPluginManager().registerEvents(new EntityDamageEventForDisguise(), this);
+        getServer().getPluginManager().registerEvents(new NoEntityTargetting(), this);
         Bukkit.getLogger().info("Plugin Enabled.");
     }
 

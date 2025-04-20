@@ -17,6 +17,7 @@ public class EntityDamageEventForDisguise implements Listener {
                         dis.disguiser.getGameMode() == GameMode.CREATIVE ||
                         dis.disguiser.getGameMode() == GameMode.SPECTATOR) {
                     ev.setCancelled(true);
+                    return;
                 }
             }
         }
