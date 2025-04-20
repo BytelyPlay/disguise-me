@@ -11,7 +11,6 @@ import org.hyperoil.playifkillers.Utils.DisguiseType;
 public class NoEntityTargetting implements Listener {
     @EventHandler
     public void onEntityTargetPlayer(EntityTargetLivingEntityEvent e) {
-        Bukkit.getLogger().info("Fired...");
         if (e.getTarget() instanceof Player p) {
             Disguise dis = Disguise.getDisguise(p);
             if (dis != null && dis.disguiseType == DisguiseType.MOB) {
