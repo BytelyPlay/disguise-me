@@ -1,15 +1,14 @@
 package org.hyperoil.playifkillers;
 
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.hyperoil.playifkillers.Commands.disguiseCommand;
-import org.hyperoil.playifkillers.Commands.undisguiseCommand;
-import org.hyperoil.playifkillers.Listeners.EntityDamageEventForDisguise;
-import org.hyperoil.playifkillers.Listeners.HideDisguisedPlayers;
-import org.hyperoil.playifkillers.Listeners.NoEntityTargetting;
-import org.hyperoil.playifkillers.Listeners.PlayerRespawnDisguise;
+import org.hyperoil.playifkillers.Commands.DisguiseCommand;
+import org.hyperoil.playifkillers.Commands.PlayerDisguiseCommand;
+import org.hyperoil.playifkillers.Commands.UnDisguiseCommand;
+import org.hyperoil.playifkillers.Listeners.*;
 import org.hyperoil.playifkillers.Utils.Disguise;
 
 public final class disguiseMe extends JavaPlugin {
@@ -18,17 +17,20 @@ public final class disguiseMe extends JavaPlugin {
     @Override
     public void onEnable() {
         instance=this;
+        ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
         /* if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
         } */
-        disguiseCommand disguise = new disguiseCommand();
+        DisguiseCommand disguise = new DisguiseCommand();
         PluginCommand DisguiseCommand = getCommand("disguise");
         DisguiseCommand.setExecutor(disguise);
         DisguiseCommand.setTabCompleter(disguise);
-        getCommand("undisguise").setExecutor(new undisguiseCommand());
+        getCommand("undisguise").setExecutor(new UnDisguiseCommand());
+        getCommand("pdisguise").setExecutor(new PlayerDisguiseCommand());
         getServer().getPluginManager().registerEvents(new HideDisguisedPlayers(), this);
         getServer().getPluginManager().registerEvents(new PlayerRespawnDisguise(), this);
         getServer().getPluginManager().registerEvents(new EntityDamageEventForDisguise(), this);
         getServer().getPluginManager().registerEvents(new NoEntityTargetting(), this);
+        protocolManager.addPacketListener(new SpoofPlayerIdentity());
         Bukkit.getLogger().info("Plugin Enabled.");
     }
 

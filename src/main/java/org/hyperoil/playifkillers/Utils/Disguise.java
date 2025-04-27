@@ -25,7 +25,8 @@ public class Disguise {
     public final OfflinePlayer playerDisguise;
     public final Player disguiser;
     public final EntityType entityType;
-    public boolean isReadyToDieAgain = true;
+    private Boolean isDisguisedEnabled = false;
+    public Boolean isReadyToDieAgain = true;
     private final Team disguiseTeam;
     private BukkitTask disguiseTask = null;
     private Entity disguiseEntity = null;
@@ -48,17 +49,18 @@ public class Disguise {
         disguiseTeam.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
     }
 
-    // TODO: later for when i add player disguising support.
-
-    /* public Disguise(@NotNull Player p, @NotNull OfflinePlayer player)  {
+    public Disguise(@NotNull Player p, @NotNull OfflinePlayer player)  {
         playerUUIDAndDisguise.put(p, this);
         disguiseType=DisguiseType.PLAYER;
         playerDisguise = player;
         entityType = null;
         disguiser=p;
-    } */
+        disguiseTeam = null;
+        isReadyToDieAgain = null;
+    }
 
     public void enableDisguise() {
+        isDisguisedEnabled = true;
         if (disguiseType == DisguiseType.MOB) {
             if (disguiseTask != null) return;
             Location locWhereToSpawn = disguiser.getLocation();
@@ -73,6 +75,8 @@ public class Disguise {
             }
             disguiseTeam.addEntry(disguiser.getName());
             disguiseTask = createDisguiseTask();
+        } else if (disguiseType == DisguiseType.PLAYER) {
+            // currently nothing...
         }
     }
 
@@ -113,6 +117,7 @@ public class Disguise {
     }
 
     public void disableDisguise() {
+        isDisguisedEnabled = false;
         if (disguiseTask == null) return;
         if (disguiseType == DisguiseType.MOB) {
             disguiseTask.cancel();
@@ -129,11 +134,11 @@ public class Disguise {
     public void detachDisguise() {
         playerUUIDAndDisguise.remove(disguiser);
         this.disableDisguise();
-        disguiseTeam.unregister();
+        if (this.disguiseType == DisguiseType.MOB) disguiseTeam.unregister();
     }
 
     public Boolean isDisguiseEnabled() {
-        return this.disguiseTask != null;
+        return isDisguisedEnabled;
     }
 
     public static Disguise getDisguise(Player p) {
