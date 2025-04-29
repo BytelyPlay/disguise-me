@@ -24,7 +24,7 @@ public class PlayerDisguiseCommand implements CommandExecutor {
                         oldDisguise.detachDisguise();
                     }
                     OfflinePlayer toDisguise = Arrays.stream(Bukkit.getOfflinePlayers()).
-                            filter(player -> Objects.equals(player.getName(), strings[0])).
+                            filter(player -> strings[0].equalsIgnoreCase(player.getName())).
                             findFirst().
                             orElse(null);
                     if (toDisguise == null) {
@@ -32,6 +32,7 @@ public class PlayerDisguiseCommand implements CommandExecutor {
                         return true;
                     }
                     new Disguise(p, toDisguise).enableDisguise();
+                    p.sendMessage(ChatColor.RED + "Done please rejoin.");
                 } else {
                     commandSender.sendMessage(ChatColor.RED + "Please only supply one argument not more, not less");
                 }
