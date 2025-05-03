@@ -1,5 +1,5 @@
 Basically a disguise plugin for minecraft.
-Player disguises are not even experimental i couldn't test them
-but the behavior seems to just be that the player cannot be seen yet 
-tab isn't disguised 
-you need to rejoin for the disguise to take full effect
+Player disguises somewhat works?
+just the skin doesn't work!
+the rest should work.
+if the player is already online it'll just use a persistent fake uuid that is stored in memory elsewhere it'll use the actual player disguise uuid.
