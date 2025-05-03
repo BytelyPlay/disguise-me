@@ -54,7 +54,6 @@ public class SpoofPlayerIdentity extends PacketAdapter {
         try {
             gameProfile = packet.getGameProfiles().read(0);
         } catch (FieldAccessException e) {
-            Bukkit.getLogger().info("[Debug] handlePlayerInfoAdd FieldAccessException");
             packet.getPlayerInfoDataLists().write(0, this.handlePlayerInfoDataLists(packet.getPlayerInfoDataLists().
                     read(0)));
             return;
@@ -62,10 +61,9 @@ public class SpoofPlayerIdentity extends PacketAdapter {
         UUID uuid = gameProfile.getUUID();
         Disguise dis = Disguise.getDisguise(Bukkit.getPlayer(uuid));
         if (dis != null) {
-            if (dis.disguiseType == DisguiseType.PLAYER) {
+            if (dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled()) {
                 if (dis.playerDisguise.isOnline()) {
                     if (fakeUUIDWithRealUUID.get(uuid) == null) fakeUUIDWithRealUUID.put(uuid, UUID.randomUUID());
-                    Bukkit.getLogger().info("[Debug] handlePlayerInfoAdd Fake UUID " + fakeUUIDWithRealUUID.get(uuid));
                     packet.getGameProfiles().write(0, new WrappedGameProfile(fakeUUIDWithRealUUID.get(uuid),
                             dis.playerDisguise.getName()));
                 } else {
@@ -79,17 +77,15 @@ public class SpoofPlayerIdentity extends PacketAdapter {
         ArrayList<PlayerInfoData> playerInfoDataResult = new ArrayList<>();
         for (PlayerInfoData playerInfoDataloop : playerInfoData) {
             if (playerInfoDataloop == null) {
-                Bukkit.getLogger().info("[Debug] playerInfoDataloop == null");
                 continue;
             }
             WrappedGameProfile gameProfile = playerInfoDataloop.getProfile();
             UUID uuid = gameProfile.getUUID();
             Disguise dis = Disguise.getDisguise(Bukkit.getPlayer(uuid));
             if (dis != null) {
-                if (dis.disguiseType == DisguiseType.PLAYER) {
+                if (dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled()) {
                     if (dis.playerDisguise.isOnline()) {
                         if (fakeUUIDWithRealUUID.get(uuid) == null) fakeUUIDWithRealUUID.put(uuid, UUID.randomUUID());
-                        Bukkit.getLogger().info("[Debug] handlePlayerInfoDataLists Fake UUID " + fakeUUIDWithRealUUID.get(uuid));
                         playerInfoDataResult.add(new PlayerInfoData(new WrappedGameProfile(fakeUUIDWithRealUUID.getOrDefault(uuid, fakeUUIDWithRealUUID.get(uuid)),
                                 dis.playerDisguise.getName()), playerInfoDataloop.getLatency(), playerInfoDataloop.getGameMode(), WrappedChatComponent.fromText(dis.playerDisguise.getName())));
                     } else {
@@ -111,12 +107,11 @@ public class SpoofPlayerIdentity extends PacketAdapter {
         String userName = packet.getStrings().read(0);
         Player p = Bukkit.getPlayer(userName);
         if (p == null) {
-            Bukkit.getLogger().info("[Debug] p == null handlePlayerInfoUpdateDisplayName");
             return;
         }
         Disguise dis = Disguise.getDisguise(p);
         if (dis != null) {
-            if (dis.disguiseType == DisguiseType.PLAYER) {
+            if (dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled()) {
                 packet.getGameProfiles().write(0, WrappedGameProfile.fromOfflinePlayer(dis.playerDisguise));
                 packet.getStrings().write(0, dis.playerDisguise.getName());
             }
@@ -131,7 +126,6 @@ public class SpoofPlayerIdentity extends PacketAdapter {
         if (dis != null && dis.isDisguiseEnabled() && dis.disguiseType == DisguiseType.PLAYER) {
             if (dis.playerDisguise.isOnline()) {
                 if (fakeUUIDWithRealUUID.get(playerUUID) == null) fakeUUIDWithRealUUID.put(playerUUID, UUID.randomUUID());
-                Bukkit.getLogger().info("[Debug] handleEntitySpawnPacket Fake UUID " + fakeUUIDWithRealUUID.get(playerUUID));
                 packet.getUUIDs().write(0, fakeUUIDWithRealUUID.getOrDefault(playerUUID, UUID.randomUUID()));
             } else {
                 packet.getUUIDs().write(0, dis.playerDisguise.getUniqueId());
