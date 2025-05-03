@@ -54,8 +54,8 @@ public class SpoofPlayerIdentity extends PacketAdapter {
         try {
             gameProfile = packet.getGameProfiles().read(0);
         } catch (FieldAccessException e) {
-            packet.getPlayerInfoDataLists().write(0, this.handlePlayerInfoDataLists(packet.getPlayerInfoDataLists().
-                    read(0)));
+            packet.getPlayerInfoDataLists().write(1, this.handlePlayerInfoDataLists(packet.getPlayerInfoDataLists().
+                    read(1)));
             return;
         }
         UUID uuid = gameProfile.getUUID();
@@ -77,6 +77,7 @@ public class SpoofPlayerIdentity extends PacketAdapter {
         ArrayList<PlayerInfoData> playerInfoDataResult = new ArrayList<>();
         for (PlayerInfoData playerInfoDataloop : playerInfoData) {
             if (playerInfoDataloop == null) {
+                Bukkit.getLogger().severe("playerInfoDataloop is null please make sure protocollib is updated to the latest dev build before reporting this to either protocollib or the plugin's github.");
                 continue;
             }
             WrappedGameProfile gameProfile = playerInfoDataloop.getProfile();
