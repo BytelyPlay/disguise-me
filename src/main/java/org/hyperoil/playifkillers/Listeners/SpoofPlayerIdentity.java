@@ -1,11 +1,14 @@
 package org.hyperoil.playifkillers.Listeners;
 
 import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.*;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.hyperoil.playifkillers.Utils.Disguise;
@@ -26,6 +29,8 @@ public class SpoofPlayerIdentity extends PacketAdapter {
     }
 
     private HashMap<UUID, UUID> fakeUUIDWithRealUUID = new HashMap<>();
+    // this is a bit of a workaround to the thing where the chat component is null for some stupid reason.
+    public static HashMap<UUID, String> lastMessageOfPlayer = new HashMap<>();
 
     @Override
     public void onPacketSending(PacketEvent event) {
@@ -40,16 +45,26 @@ public class SpoofPlayerIdentity extends PacketAdapter {
     }
 
     private void handlePlayerChatPacket(PacketEvent e) {
-        // try to get this to work it works on the main plugin with the same code so this is odd.
-        /* PacketContainer packet = e.getPacket();
+        PacketContainer packet = e.getPacket();
         ProtocolManager protocolManager = disguiseMe.getInstance().getProtocolManager();
         UUID sender = packet.getUUIDs().read(0);
-        Disguise dis = Disguise.getDisguise(Bukkit.getPlayer(sender));
+        Disguise dis = Disguise.getDisguise(sender);
         if (dis != null && dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled()) {
-            PacketContainer newPacket = protocolManager.createPacket(PacketType.Play.Server.SYSTEM_CHAT);
-            newPacket.getChatComponents().write(0, packet.getChatComponents().read(0));
-            e.setPacket(newPacket);
-        } */
+            PacketContainer PacketToBeSent = protocolManager.createPacket(PacketType.Play.Server.SYSTEM_CHAT);
+            WrappedChatComponent chatComponent = packet.getChatComponents().read(0);
+            if (chatComponent != null) {
+                PacketToBeSent.getChatComponents().write(0, chatComponent);
+            } else {
+                String message = lastMessageOfPlayer.get(sender);
+                if (message == null) {
+                    Bukkit.getLogger().severe("Cannot properly send a chat message that a disguised player wants to send as chatComponent == null and the backup last message is null");
+                    return;
+                } else {
+                    PacketToBeSent.getChatComponents().write(0, WrappedChatComponent.fromText(message));
+                }
+            }
+            e.setPacket(PacketToBeSent);
+        }
     }
 
     private void handlePlayerInfoPacket(PacketEvent event) {
@@ -65,17 +80,14 @@ public class SpoofPlayerIdentity extends PacketAdapter {
     }
 
     private void handlePlayerInfoInitializeChat(PacketEvent e) {
-        // next thing
+        // could be good if i figure it out
         /* PacketContainer packet = e.getPacket();
-        UUID uuid = packet.getUUIDs().read(0);
+        WrappedGameProfile gameProfile = packet.getGameProfiles().read(1);
+        UUID uuid = gameProfile.getUUID();
         Disguise dis = Disguise.getDisguise(uuid);
         if (dis != null) {
             if (dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled()) {
-                if (dis.playerDisguise.isOnline() || fakeUUIDWithRealUUID.containsKey(uuid)) {
-                    packet.getUUIDs().write(0, fakeUUIDWithRealUUID.get(uuid));
-                } else {
-                    packet.getUUIDs().write(0, dis.playerDisguise.getUniqueId());
-                }
+                Bukkit.getLogger().info("[Debug] success");
             }
         } */
     }
@@ -95,7 +107,7 @@ public class SpoofPlayerIdentity extends PacketAdapter {
             }
             WrappedGameProfile gameProfile = playerInfoDataloop.getProfile();
             UUID uuid = gameProfile.getUUID();
-            Disguise dis = Disguise.getDisguise(Bukkit.getPlayer(uuid));
+            Disguise dis = Disguise.getDisguise(uuid);
             if (dis != null) {
                 if (dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled()) {
                     if (dis.playerDisguise.isOnline() || fakeUUIDWithRealUUID.containsKey(uuid)) {

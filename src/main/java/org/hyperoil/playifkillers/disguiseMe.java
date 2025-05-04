@@ -40,6 +40,7 @@ public final class disguiseMe extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerRespawnDisguise(), this);
         getServer().getPluginManager().registerEvents(new EntityDamageEventForDisguise(), this);
         getServer().getPluginManager().registerEvents(new NoEntityTargetting(), this);
+        getServer().getPluginManager().registerEvents(new LastMessageTracker(), this);
         protocolManager.addPacketListener(new SpoofPlayerIdentity());
         APIUtils.initCache();
         Bukkit.getLogger().info("Plugin Enabled.");
