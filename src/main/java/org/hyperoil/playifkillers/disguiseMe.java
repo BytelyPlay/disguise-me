@@ -10,14 +10,15 @@ import org.hyperoil.playifkillers.Commands.PlayerDisguiseCommand;
 import org.hyperoil.playifkillers.Commands.UnDisguiseCommand;
 import org.hyperoil.playifkillers.Listeners.*;
 import org.hyperoil.playifkillers.Utils.Disguise;
+import org.hyperoil.playifkillers.Utils.SkinFetcher;
 
 public final class disguiseMe extends JavaPlugin {
     private static disguiseMe instance;
-
+    private ProtocolManager protocolManager;
     @Override
     public void onEnable() {
         instance=this;
-        ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
+        protocolManager = ProtocolLibrary.getProtocolManager();
         /* if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
         } */
         DisguiseCommand disguise = new DisguiseCommand();
@@ -31,6 +32,7 @@ public final class disguiseMe extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new EntityDamageEventForDisguise(), this);
         getServer().getPluginManager().registerEvents(new NoEntityTargetting(), this);
         protocolManager.addPacketListener(new SpoofPlayerIdentity());
+        SkinFetcher.initCache();
         Bukkit.getLogger().info("Plugin Enabled.");
     }
 
@@ -44,5 +46,8 @@ public final class disguiseMe extends JavaPlugin {
 
     public static disguiseMe getInstance() {
         return instance;
+    }
+    public ProtocolManager getProtocolManager() {
+        return protocolManager;
     }
 }

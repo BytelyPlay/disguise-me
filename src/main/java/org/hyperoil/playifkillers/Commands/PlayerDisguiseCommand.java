@@ -23,6 +23,7 @@ public class PlayerDisguiseCommand implements CommandExecutor {
                     if (oldDisguise != null) {
                         oldDisguise.detachDisguise();
                     }
+                    // let's not use this and just ping the api...
                     OfflinePlayer toDisguise = Arrays.stream(Bukkit.getOfflinePlayers()).
                             filter(player -> strings[0].equalsIgnoreCase(player.getName())).
                             findFirst().
