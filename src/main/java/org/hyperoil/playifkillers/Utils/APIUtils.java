@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public class APIUtils {
     // sadly we have to use https://playerdb.co/api/player/minecraft/ instead of https://sessionserver.mojang.com/session/minecraft/profile/ as i don't know how to use signatures otherwise so
-    // TODO: figure out how to use https://sessionserver.mojang.com/session/minecraft/profile/ instead of the playerdb.co (problem i need the skin signature)
+    // TODO: figure out how to use the official mojang api(s) instead of the playerdb.co (problem i need the skin signature)
     private static final String UUID_API = "https://playerdb.co/api/player/minecraft/%s";
     private static HttpClient httpClient = HttpClient.newBuilder().
             followRedirects(HttpClient.Redirect.NEVER).
