@@ -11,7 +11,7 @@ import org.hyperoil.playifkillers.Commands.UnDisguiseCommand;
 import org.hyperoil.playifkillers.Hooks.PAPIHook;
 import org.hyperoil.playifkillers.Listeners.*;
 import org.hyperoil.playifkillers.Utils.Disguise;
-import org.hyperoil.playifkillers.Utils.SkinFetcher;
+import org.hyperoil.playifkillers.Utils.APIUtils;
 
 public final class disguiseMe extends JavaPlugin {
     private static disguiseMe instance;
@@ -41,7 +41,7 @@ public final class disguiseMe extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new EntityDamageEventForDisguise(), this);
         getServer().getPluginManager().registerEvents(new NoEntityTargetting(), this);
         protocolManager.addPacketListener(new SpoofPlayerIdentity());
-        SkinFetcher.initCache();
+        APIUtils.initCache();
         Bukkit.getLogger().info("Plugin Enabled.");
     }
 

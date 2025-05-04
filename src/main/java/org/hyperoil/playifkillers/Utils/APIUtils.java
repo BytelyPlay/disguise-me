@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bukkit.Bukkit;
 import org.hyperoil.playifkillers.disguiseMe;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -14,14 +12,16 @@ import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.UUID;
 
-public class SkinFetcher {
-    private static final String UUID_API = "https://sessionserver.mojang.com/session/minecraft/profile/%s";
+public class APIUtils {
+    // sadly we have to use https://playerdb.co/api/player/minecraft/ instead of https://sessionserver.mojang.com/session/minecraft/profile/ as i don't know how to use signatures otherwise so
+    // TODO: figure out how to use https://sessionserver.mojang.com/session/minecraft/profile/ instead of the playerdb.co (problem i need the skin signature)
+    private static final String UUID_API = "https://playerdb.co/api/player/minecraft/%s";
     private static HttpClient httpClient = HttpClient.newBuilder().
             followRedirects(HttpClient.Redirect.NEVER).
             build();
     private static ObjectMapper objectMapper = new ObjectMapper();
-    private static HashMap<UUID, String> cache = new HashMap<>();
-    public static String getPlayerSkin(UUID uuid) {
+    private static HashMap<UUID, Skin> cache = new HashMap<>();
+    public static Skin getPlayerSkin(UUID uuid) {
         if (cache.containsKey(uuid)) {
             return cache.get(uuid);
         }
@@ -31,9 +31,15 @@ public class SkinFetcher {
         try {
             HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             JsonNode rootNode = objectMapper.readTree(httpResponse.body());
-            JsonNode properties = rootNode.get("properties");
+            JsonNode data = rootNode.get("data");
+            JsonNode player = data.get("player");
+            JsonNode properties = player.get("properties");
             JsonNode textures = properties.get(0);
-            return textures.get("value").textValue();
+            String skinTexture = textures.get("value").textValue();
+            String signature = textures.get("signature").textValue();
+            Skin skin = new Skin(uuid, skinTexture, signature);
+            cache.put(uuid, skin);
+            return skin;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
