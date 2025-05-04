@@ -8,6 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.hyperoil.playifkillers.Commands.DisguiseCommand;
 import org.hyperoil.playifkillers.Commands.PlayerDisguiseCommand;
 import org.hyperoil.playifkillers.Commands.UnDisguiseCommand;
+import org.hyperoil.playifkillers.Hooks.PAPIHook;
 import org.hyperoil.playifkillers.Listeners.*;
 import org.hyperoil.playifkillers.Utils.Disguise;
 import org.hyperoil.playifkillers.Utils.SkinFetcher;
@@ -15,12 +16,20 @@ import org.hyperoil.playifkillers.Utils.SkinFetcher;
 public final class disguiseMe extends JavaPlugin {
     private static disguiseMe instance;
     private ProtocolManager protocolManager;
+    private static PAPIHook papiHook;
     @Override
     public void onEnable() {
         instance=this;
         protocolManager = ProtocolLibrary.getProtocolManager();
-        /* if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
-        } */
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            Bukkit.getLogger().info("Found placeholderapi initializing hook.");
+            if (papiHook == null) {
+                papiHook = new PAPIHook();
+            }
+            papiHook.register();
+        } else {
+            Bukkit.getLogger().info("PlaceHolderAPI not found not initializing hook.");
+        }
         DisguiseCommand disguise = new DisguiseCommand();
         PluginCommand DisguiseCommand = getCommand("disguise");
         DisguiseCommand.setExecutor(disguise);
@@ -40,6 +49,14 @@ public final class disguiseMe extends JavaPlugin {
     public void onDisable() {
         for (Disguise disguise : Disguise.getAllDisguises()) {
             disguise.detachDisguise();
+        }
+        if (papiHook != null) {
+            if (papiHook.isRegistered()) {
+                papiHook.unregister();
+                papiHook = null;
+            } else {
+                papiHook = null;
+            }
         }
         Bukkit.getLogger().info("Plugin Disabled.");
     }

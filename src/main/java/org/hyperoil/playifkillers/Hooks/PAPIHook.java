@@ -1,11 +1,13 @@
-package org.hyperoil.playifkillers;
+package org.hyperoil.playifkillers.Hooks;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.hyperoil.playifkillers.Utils.Disguise;
+import org.hyperoil.playifkillers.Utils.DisguiseType;
+import org.hyperoil.playifkillers.disguiseMe;
 import org.jetbrains.annotations.NotNull;
 
-public class PlaceHolderAPI extends PlaceholderExpansion {
+public class PAPIHook extends PlaceholderExpansion {
     @Override
     public @NotNull String getIdentifier() {
         return "disguiseme";
@@ -23,8 +25,15 @@ public class PlaceHolderAPI extends PlaceholderExpansion {
 
     @Override
     public String onRequest(OfflinePlayer player, @NotNull String params) {
-        if (params.equals("disguise_username")) {
-            Disguise.
+        if (player == null) return null;
+        if (params.equals("username")) {
+            Disguise dis = Disguise.getDisguise(player.getUniqueId());
+            if (dis != null && dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled()) {
+                return dis.playerDisguise.getName();
+            } else {
+                return player.getName();
+            }
         }
+        return "INVALID_PARAMS";
     }
 }

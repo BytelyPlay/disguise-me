@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 public class Disguise {
-    private static HashMap<Player, Disguise> playerUUIDAndDisguise = new HashMap<>();
+    private static HashMap<UUID, Disguise> playerUUIDAndDisguise = new HashMap<>();
     public final int disguiseType;
     public final OfflinePlayer playerDisguise;
     public final Player disguiser;
@@ -31,7 +31,7 @@ public class Disguise {
     private BukkitTask disguiseTask = null;
     private Entity disguiseEntity = null;
     public Disguise(@NotNull Player p, @NotNull EntityType type) {
-        playerUUIDAndDisguise.put(p, this);
+        playerUUIDAndDisguise.put(p.getUniqueId(), this);
         disguiseType = DisguiseType.MOB;
         playerDisguise = null;
         entityType = type;
@@ -50,7 +50,7 @@ public class Disguise {
     }
 
     public Disguise(@NotNull Player p, @NotNull OfflinePlayer player)  {
-        playerUUIDAndDisguise.put(p, this);
+        playerUUIDAndDisguise.put(p.getUniqueId(), this);
         disguiseType=DisguiseType.PLAYER;
         playerDisguise = player;
         entityType = null;
@@ -132,7 +132,7 @@ public class Disguise {
     }
 
     public void detachDisguise() {
-        playerUUIDAndDisguise.remove(disguiser);
+        playerUUIDAndDisguise.remove(disguiser.getUniqueId());
         this.disableDisguise();
         if (this.disguiseType == DisguiseType.MOB) disguiseTeam.unregister();
     }
@@ -142,7 +142,11 @@ public class Disguise {
     }
 
     public static Disguise getDisguise(Player p) {
-        return playerUUIDAndDisguise.get(p);
+        return playerUUIDAndDisguise.get(p.getUniqueId());
+    }
+
+    public static Disguise getDisguise(UUID uuid) {
+        return playerUUIDAndDisguise.get(uuid);
     }
 
     public static Disguise[] getAllDisguises() {
