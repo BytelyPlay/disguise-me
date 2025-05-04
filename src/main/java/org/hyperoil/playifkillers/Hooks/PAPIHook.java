@@ -2,6 +2,7 @@ package org.hyperoil.playifkillers;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
+import org.hyperoil.playifkillers.Utils.Disguise;
 import org.jetbrains.annotations.NotNull;
 
 public class PlaceHolderAPI extends PlaceholderExpansion {
@@ -22,6 +23,8 @@ public class PlaceHolderAPI extends PlaceholderExpansion {
 
     @Override
     public String onRequest(OfflinePlayer player, @NotNull String params) {
-        return null;
+        if (params.equals("disguise_username")) {
+            Disguise.
+        }
     }
 }
