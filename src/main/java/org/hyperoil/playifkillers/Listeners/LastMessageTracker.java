@@ -13,7 +13,7 @@ public class LastMessageTracker implements Listener {
     public void onPlayerChatEvent(AsyncPlayerChatEvent e) {
         String messageToBeSent = e.getFormat();
         Disguise dis = Disguise.getDisguise(e.getPlayer().getUniqueId());
-        if (dis != null && dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled()) {
+        if (dis != null && dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled() && !e.isCancelled()) {
             messageToBeSent = messageToBeSent.replace("%1$s", dis.playerDisguise.getName());
             messageToBeSent = messageToBeSent.replace("%2$s", e.getMessage());
             SpoofPlayerIdentity.lastMessageOfPlayer.put(e.getPlayer().getUniqueId(), messageToBeSent);
