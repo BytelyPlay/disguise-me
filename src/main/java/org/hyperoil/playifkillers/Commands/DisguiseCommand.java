@@ -27,6 +27,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter {
                         }
                         EntityType entityType = EntityType.valueOf(strings[0].toUpperCase());
                         new Disguise(p, entityType).enableDisguise();
+                        p.sendMessage(ChatColor.RED + "Done...");
                     } catch (IllegalArgumentException ex) {
                         commandSender.sendMessage(ChatColor.RED + "Please provide A ACTUAL entity.");
                     }
