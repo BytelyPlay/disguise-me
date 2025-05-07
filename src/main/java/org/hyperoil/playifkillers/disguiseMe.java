@@ -31,9 +31,9 @@ public final class disguiseMe extends JavaPlugin {
             Bukkit.getLogger().info("PlaceHolderAPI not found not initializing hook.");
         }
         DisguiseCommand disguise = new DisguiseCommand();
-        PluginCommand DisguiseCommand = getCommand("disguise");
-        DisguiseCommand.setExecutor(disguise);
-        DisguiseCommand.setTabCompleter(disguise);
+        PluginCommand disguiseCommand = getCommand("disguise");
+        disguiseCommand.setExecutor(disguise);
+        disguiseCommand.setTabCompleter(disguise);
         getCommand("undisguise").setExecutor(new UnDisguiseCommand());
         getCommand("pdisguise").setExecutor(new PlayerDisguiseCommand());
         getServer().getPluginManager().registerEvents(new HideDisguisedPlayers(), this);

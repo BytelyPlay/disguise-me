@@ -1,7 +1,10 @@
 package org.hyperoil.playifkillers.Utils;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.wrappers.*;
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.attribute.Attribute;
@@ -17,7 +20,10 @@ import org.hyperoil.playifkillers.disguiseMe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Disguise {
     private static HashMap<UUID, Disguise> playerUUIDAndDisguise = new HashMap<>();
@@ -76,7 +82,7 @@ public class Disguise {
             disguiseTeam.addEntry(disguiser.getName());
             disguiseTask = createDisguiseTask();
         } else if (disguiseType == DisguiseType.PLAYER) {
-            // currently nothing...
+            // this.sendUpdatePacketForPlayerDisguise();
         }
     }
 
@@ -128,6 +134,8 @@ public class Disguise {
                     onlinep.showPlayer(disguiseMe.getInstance(), disguiser);
                 }
             }
+        } else if (disguiseType == DisguiseType.PLAYER) {
+
         }
     }
 
@@ -155,5 +163,30 @@ public class Disguise {
 
     public Entity getDisguiseEntity() {
         return this.disguiseEntity;
+    }
+
+    private void sendUpdatePacketForPlayerDisguise() {
+        if (disguiseType == DisguiseType.PLAYER) {
+            ProtocolManager protocolManager = disguiseMe.getInstance().getProtocolManager();
+            PacketContainer playerInfoUpdatePacket = protocolManager.createPacket(PacketType.Play.Server.PLAYER_INFO);
+            playerInfoUpdatePacket.getPlayerInfoActions().write(0, Set.of(EnumWrappers.PlayerInfoAction.ADD_PLAYER));
+            WrappedGameProfile wrappedGameProfile = new WrappedGameProfile(this.playerDisguise.getUniqueId(), this.playerDisguise.getName());
+            Skin skin = APIUtils.getPlayerSkin(this.playerDisguise.getUniqueId());
+            if (skin == null) {
+                Bukkit.getLogger().severe("skin == null not automatically changing skin rejoin needed.");
+                return;
+            }
+            int ping = ThreadLocalRandom.current().nextInt(20, 100);
+            EnumWrappers.NativeGameMode gameMode = EnumWrappers.NativeGameMode.fromBukkit(this.disguiser.getGameMode());
+            WrappedChatComponent displayName = WrappedChatComponent.fromText(this.playerDisguise.getName());
+            wrappedGameProfile.getProperties().put("textures", new WrappedSignedProperty("textures", skin.getSkin(), skin.getSignature()));
+            playerInfoUpdatePacket.getPlayerInfoDataLists().write(1, List.of(new PlayerInfoData(wrappedGameProfile, ping,
+                    gameMode, displayName)));
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                protocolManager.sendServerPacket(p, playerInfoUpdatePacket);
+            }
+        } else {
+            Bukkit.getLogger().warning("Tried to call sendUpdatePacketForPlayerDisguise in a non-player disguise.");
+        }
     }
 }
