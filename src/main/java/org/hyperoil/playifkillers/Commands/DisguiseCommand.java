@@ -22,7 +22,7 @@ public class DisguiseCommand implements CommandExecutor, TabCompleter {
                 if (strings.length == 1) {
                     try {
                         Disguise oldDisguise = Disguise.getDisguise(p);
-                        if (Disguise.getDisguise(p) != null) {
+                        if (oldDisguise != null) {
                             oldDisguise.detachDisguise();
                         }
                         EntityType entityType = EntityType.valueOf(strings[0].toUpperCase());

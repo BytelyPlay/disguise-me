@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
@@ -107,7 +108,12 @@ public class Disguise {
                 disguiser.hideEntity(disguiseMe.getInstance(), disguiseEntity);
             }
             if (this.disguiseEntity instanceof LivingEntity livingEntity) {
-                disguiser.setHealth(livingEntity.getHealth());
+                AttributeInstance maxHealth = disguiser.getAttribute(Attribute.MAX_HEALTH);
+                if (maxHealth == null) {
+                    Bukkit.getLogger().severe("maxhealth is null in createDisguiseTask.");
+                    return;
+                }
+                disguiser.setHealth(Math.min(maxHealth.getValue(), livingEntity.getHealth()));
             } else {
                 disguiser.setHealth(disguiser.getAttribute(Attribute.MAX_HEALTH).getValue());
             }
