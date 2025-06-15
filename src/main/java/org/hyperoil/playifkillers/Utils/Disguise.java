@@ -166,12 +166,14 @@ public class Disguise {
     }
 
     private void sendUpdatePacketForPlayerDisguise() {
+        // TODO: Hey, forgot to update this at the time but I think this doesn't work yet so uh Make it work...
         if (disguiseType == DisguiseType.PLAYER) {
             ProtocolManager protocolManager = disguiseMe.getInstance().getProtocolManager();
             PacketContainer playerInfoUpdatePacket = protocolManager.createPacket(PacketType.Play.Server.PLAYER_INFO);
             playerInfoUpdatePacket.getPlayerInfoActions().write(0, Set.of(EnumWrappers.PlayerInfoAction.ADD_PLAYER));
             WrappedGameProfile wrappedGameProfile = new WrappedGameProfile(this.playerDisguise.getUniqueId(), this.playerDisguise.getName());
-            Skin skin = APIUtils.getPlayerSkin(this.playerDisguise.getUniqueId());
+            APIResponse response = APIUtils.fetchPlayer(this.playerDisguise.getUniqueId());
+            Skin skin = response.skin;
             if (skin == null) {
                 Bukkit.getLogger().severe("skin == null not automatically changing skin rejoin needed.");
                 return;

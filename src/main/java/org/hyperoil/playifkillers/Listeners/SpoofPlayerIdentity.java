@@ -11,10 +11,7 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.hyperoil.playifkillers.Utils.Disguise;
-import org.hyperoil.playifkillers.Utils.DisguiseType;
-import org.hyperoil.playifkillers.Utils.Skin;
-import org.hyperoil.playifkillers.Utils.APIUtils;
+import org.hyperoil.playifkillers.Utils.*;
 import org.hyperoil.playifkillers.disguiseMe;
 
 import java.util.*;
@@ -109,13 +106,15 @@ public class SpoofPlayerIdentity extends PacketAdapter {
             UUID uuid = gameProfile.getUUID();
             Disguise dis = Disguise.getDisguise(uuid);
             if (dis != null) {
+                UUID disguiseUUID = dis.playerDisguise.getUniqueId();
+                APIResponse response = APIUtils.fetchPlayer(disguiseUUID);
+                Skin skin = response.skin;
+                String disguiseUsername = dis.playerDisguise.getName();
                 if (dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled()) {
                     if (dis.playerDisguise.isOnline() || fakeUUIDWithRealUUID.containsKey(uuid)) {
                         if (fakeUUIDWithRealUUID.get(uuid) == null) fakeUUIDWithRealUUID.put(uuid, UUID.randomUUID());
                         WrappedGameProfile disguiseProfile = new WrappedGameProfile(fakeUUIDWithRealUUID.getOrDefault(uuid, fakeUUIDWithRealUUID.get(uuid)),
-                                dis.playerDisguise.getName());
-                        Skin skin = APIUtils.
-                                getPlayerSkin(dis.playerDisguise.getUniqueId());
+                                disguiseUsername);
                         if (skin == null) {
                             Bukkit.getLogger().severe("skin == null handlePlayerInfoDataLists");
                         }
@@ -123,15 +122,13 @@ public class SpoofPlayerIdentity extends PacketAdapter {
                         playerInfoDataResult.add(new PlayerInfoData(disguiseProfile, playerInfoDataloop.getLatency(), playerInfoDataloop.getGameMode(), WrappedChatComponent.fromText(dis.playerDisguise.getName())));
                     } else {
                         WrappedGameProfile disguiseProfile = new WrappedGameProfile(fakeUUIDWithRealUUID.getOrDefault(uuid, dis.playerDisguise.getUniqueId()),
-                                dis.playerDisguise.getName());
-                        Skin skin = APIUtils.
-                                getPlayerSkin(dis.playerDisguise.getUniqueId());
+                                disguiseUsername);
                         if (skin == null) {
                             Bukkit.getLogger().severe("skin == null handlePlayerInfoDataLists");
                         }
                         disguiseProfile.getProperties().put("textures", new WrappedSignedProperty("textures", skin.getSkin(), skin.getSignature()));
                         playerInfoDataResult.add(new PlayerInfoData(disguiseProfile, playerInfoDataloop.getLatency(), playerInfoDataloop.getGameMode(),
-                                WrappedChatComponent.fromText(dis.playerDisguise.getName())));
+                                WrappedChatComponent.fromText(disguiseUsername)));
                     }
                 } else {
                     playerInfoDataResult.add(playerInfoDataloop);

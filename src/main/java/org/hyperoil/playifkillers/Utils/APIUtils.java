@@ -19,18 +19,10 @@ public class APIUtils {
             followRedirects(HttpClient.Redirect.NEVER).
             build();
     private static ObjectMapper objectMapper = new ObjectMapper();
-    private static HashMap<UUID, JsonNode> cache = new HashMap<>();
-    public static Skin getPlayerSkin(UUID uuid) {
+    private static HashMap<UUID, APIResponse> cache = new HashMap<>();
+    public static APIResponse fetchPlayer(UUID uuid) {
         if (cache.containsKey(uuid)) {
-            JsonNode rootNode = cache.get(uuid);
-            JsonNode data = rootNode.get("data");
-            JsonNode player = data.get("player");
-            JsonNode properties = player.get("properties");
-            JsonNode textures = properties.get(0);
-            String skinTexture = textures.get("value").textValue();
-            String signature = textures.get("signature").textValue();
-            Skin skin = new Skin(uuid, skinTexture, signature);
-            return skin;
+            return cache.get(uuid);
         }
         HttpRequest httpRequest = HttpRequest.newBuilder(URI.create(String.format(UUID_API, uuid.toString()))).
                 GET().
@@ -38,15 +30,17 @@ public class APIUtils {
         try {
             HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             JsonNode rootNode = objectMapper.readTree(httpResponse.body());
-            cache.put(uuid, rootNode);
             JsonNode data = rootNode.get("data");
             JsonNode player = data.get("player");
+            String username = player.get("username").textValue();
             JsonNode properties = player.get("properties");
             JsonNode textures = properties.get(0);
             String skinTexture = textures.get("value").textValue();
             String signature = textures.get("signature").textValue();
             Skin skin = new Skin(uuid, skinTexture, signature);
-            return skin;
+            APIResponse response = new APIResponse(uuid, username, skin);
+            cache.put(uuid, response);
+            return response;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
