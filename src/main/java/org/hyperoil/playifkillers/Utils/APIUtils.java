@@ -19,10 +19,11 @@ public class APIUtils {
             followRedirects(HttpClient.Redirect.NEVER).
             build();
     private static ObjectMapper objectMapper = new ObjectMapper();
-    private static HashMap<UUID, APIResponse> cache = new HashMap<>();
+    private static HashMap<UUID, APIResponse> responseCache = new HashMap<>();
+    private static HashMap<String, UUID> UUIDCache = new HashMap<>();
     public static APIResponse fetchPlayer(UUID uuid) {
-        if (cache.containsKey(uuid)) {
-            return cache.get(uuid);
+        if (responseCache.containsKey(uuid)) {
+            return responseCache.get(uuid);
         }
         HttpRequest httpRequest = HttpRequest.newBuilder(URI.create(String.format(UUID_API, uuid.toString()))).
                 GET().
@@ -39,7 +40,33 @@ public class APIUtils {
             String signature = textures.get("signature").textValue();
             Skin skin = new Skin(uuid, skinTexture, signature);
             APIResponse response = new APIResponse(uuid, username, skin);
-            cache.put(uuid, response);
+            responseCache.put(uuid, response);
+            return response;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public static APIResponse fetchPlayer(String username) {
+        if (UUIDCache.containsKey(username)) {
+            return fetchPlayer(UUIDCache.get(username));
+        }
+        HttpRequest httpRequest = HttpRequest.newBuilder(URI.create(String.format(UUID_API, username))).
+                GET().
+                build();
+        try {
+            HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            JsonNode rootNode = objectMapper.readTree(httpResponse.body());
+            JsonNode data = rootNode.get("data");
+            JsonNode player = data.get("player");
+            UUID uuid = UUID.fromString(player.get("id").textValue());
+            JsonNode properties = player.get("properties");
+            JsonNode textures = properties.get(0);
+            String skinTexture = textures.get("value").textValue();
+            String signature = textures.get("signature").textValue();
+            Skin skin = new Skin(uuid, skinTexture, signature);
+            APIResponse response = new APIResponse(uuid, username, skin);
+            responseCache.put(uuid, response);
             return response;
         } catch (Exception e) {
             e.printStackTrace();
@@ -48,7 +75,7 @@ public class APIUtils {
     }
     public static void initCache() {
         Bukkit.getScheduler().runTaskTimer(disguiseMe.getInstance(), () -> {
-            cache.clear();
+            responseCache.clear();
         }, 12000, 12000);
     }
 }
