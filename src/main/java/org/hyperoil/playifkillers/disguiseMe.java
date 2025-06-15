@@ -10,8 +10,8 @@ import org.hyperoil.playifkillers.Commands.PlayerDisguiseCommand;
 import org.hyperoil.playifkillers.Commands.UnDisguiseCommand;
 import org.hyperoil.playifkillers.Hooks.PAPIHook;
 import org.hyperoil.playifkillers.Listeners.*;
-import org.hyperoil.playifkillers.Utils.Disguise;
 import org.hyperoil.playifkillers.Utils.APIUtils;
+import org.hyperoil.playifkillers.Utils.Disguise;
 
 public final class disguiseMe extends JavaPlugin {
     private static disguiseMe instance;

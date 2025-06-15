@@ -16,6 +16,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
+import org.hyperoil.playifkillers.Listeners.SpoofPlayerIdentity;
 import org.hyperoil.playifkillers.disguiseMe;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ public class Disguise {
     public final OfflinePlayer playerDisguise;
     public final Player disguiser;
     public final EntityType entityType;
-    private Boolean isDisguisedEnabled = false;
+    private Boolean isDisguiseEnabled = false;
     public Boolean isReadyToDieAgain = true;
     private final Team disguiseTeam;
     private BukkitTask disguiseTask = null;
@@ -66,7 +67,7 @@ public class Disguise {
     }
 
     public void enableDisguise() {
-        isDisguisedEnabled = true;
+        isDisguiseEnabled = true;
         if (disguiseType == DisguiseType.MOB) {
             if (disguiseTask != null) return;
             Location locWhereToSpawn = disguiser.getLocation();
@@ -82,7 +83,7 @@ public class Disguise {
             disguiseTeam.addEntry(disguiser.getName());
             disguiseTask = createDisguiseTask();
         } else if (disguiseType == DisguiseType.PLAYER) {
-            // this.sendUpdatePacketForPlayerDisguise();
+            this.sendUpdatePackets();
         }
     }
 
@@ -123,8 +124,8 @@ public class Disguise {
     }
 
     public void disableDisguise() {
-        isDisguisedEnabled = false;
-        if (disguiseTask == null) return;
+        if (!isDisguiseEnabled) return;
+        isDisguiseEnabled = false;
         if (disguiseType == DisguiseType.MOB) {
             disguiseTask.cancel();
             disguiseTask = null;
@@ -135,7 +136,7 @@ public class Disguise {
                 }
             }
         } else if (disguiseType == DisguiseType.PLAYER) {
-
+            this.sendUpdatePackets();
         }
     }
 
@@ -146,7 +147,7 @@ public class Disguise {
     }
 
     public Boolean isDisguiseEnabled() {
-        return isDisguisedEnabled;
+        return isDisguiseEnabled;
     }
 
     public static Disguise getDisguise(Player p) {
@@ -165,30 +166,63 @@ public class Disguise {
         return this.disguiseEntity;
     }
 
-    private void sendUpdatePacketForPlayerDisguise() {
-        // TODO: Hey, forgot to update this at the time but I think this doesn't work yet so uh Make it work...
+    private void sendUpdatePackets() {
+        // TODO: Hey, forgot to update this at the time but I think this doesn't work yet so uh Make it work... also i didn't test the latest version with a one tick separation so that should be tested.
         if (disguiseType == DisguiseType.PLAYER) {
             ProtocolManager protocolManager = disguiseMe.getInstance().getProtocolManager();
-            PacketContainer playerInfoUpdatePacket = protocolManager.createPacket(PacketType.Play.Server.PLAYER_INFO);
-            playerInfoUpdatePacket.getPlayerInfoActions().write(0, Set.of(EnumWrappers.PlayerInfoAction.ADD_PLAYER));
-            WrappedGameProfile wrappedGameProfile = new WrappedGameProfile(this.playerDisguise.getUniqueId(), this.playerDisguise.getName());
-            APIResponse response = APIUtils.fetchPlayer(this.playerDisguise.getUniqueId());
-            Skin skin = response.skin;
-            if (skin == null) {
-                Bukkit.getLogger().severe("skin == null not automatically changing skin rejoin needed.");
-                return;
+            PacketContainer playerInfoRemovePacket;
+            // PacketContainer playerInfoUpdatePacket;
+            if (isDisguiseEnabled) {
+                playerInfoRemovePacket = this.getPlayerInfoRemovePacket(this.disguiser);
+                // playerInfoUpdatePacket = this.getPlayerInfoUpdatePacket(this.playerDisguise, EnumWrappers.NativeGameMode.fromBukkit(disguiser.getGameMode()));
+            } else {
+                playerInfoRemovePacket = this.getPlayerInfoRemovePacket(this.playerDisguise);
+                // playerInfoUpdatePacket = this.getPlayerInfoUpdatePacket(this.disguiser, EnumWrappers.NativeGameMode.fromBukkit(disguiser.getGameMode()));
             }
-            int ping = ThreadLocalRandom.current().nextInt(20, 100);
-            EnumWrappers.NativeGameMode gameMode = EnumWrappers.NativeGameMode.fromBukkit(this.disguiser.getGameMode());
-            WrappedChatComponent displayName = WrappedChatComponent.fromText(this.playerDisguise.getName());
-            wrappedGameProfile.getProperties().put("textures", new WrappedSignedProperty("textures", skin.getSkin(), skin.getSignature()));
-            playerInfoUpdatePacket.getPlayerInfoDataLists().write(1, List.of(new PlayerInfoData(wrappedGameProfile, ping,
-                    gameMode, displayName)));
             for (Player p : Bukkit.getOnlinePlayers()) {
-                protocolManager.sendServerPacket(p, playerInfoUpdatePacket);
+                // TODO: Make this fully packet based not just this stupidity. Oh and also so that the player himself can see his skin change and his name change in tab.
+                p.hidePlayer(disguiseMe.getInstance(), this.disguiser);
+                if (!isDisguiseEnabled && !p.equals(disguiser)) {
+                    protocolManager.sendServerPacket(p, playerInfoRemovePacket);
+                }
+                Bukkit.getScheduler().runTaskLater(disguiseMe.getInstance(), () -> {
+                    p.showPlayer(disguiseMe.getInstance(), this.disguiser);
+                    // protocolManager.sendServerPacket(p, playerInfoUpdatePacket);
+                }, 1);
             }
         } else {
-            Bukkit.getLogger().warning("Tried to call sendUpdatePacketForPlayerDisguise in a non-player disguise.");
+            Bukkit.getLogger().warning("Tried to call sendUpdatePackets in a non-player disguise.");
         }
+    }
+    private PacketContainer getPlayerInfoRemovePacket(OfflinePlayer player) {
+        ProtocolManager protocolManager = disguiseMe.getInstance().getProtocolManager();
+        PacketContainer playerInfoRemovePacket = protocolManager.createPacket(PacketType.Play.Server.PLAYER_INFO_REMOVE);
+        if (!SpoofPlayerIdentity.fakeUUIDWithRealUUID.containsKey(player.getUniqueId()) || player == this.disguiser) {
+            playerInfoRemovePacket.getUUIDLists().write(0, List.of(player.getUniqueId()));
+        } else {
+            playerInfoRemovePacket.getUUIDLists().write(0, List.of(SpoofPlayerIdentity.fakeUUIDWithRealUUID.get(player.getUniqueId())));
+        }
+        return playerInfoRemovePacket;
+    }
+    private PacketContainer getPlayerInfoUpdatePacket(OfflinePlayer player, EnumWrappers.NativeGameMode gameMode) {
+        ProtocolManager protocolManager = disguiseMe.getInstance().getProtocolManager();
+        PacketContainer playerInfoUpdatePacket = protocolManager.createPacket(PacketType.Play.Server.PLAYER_INFO);
+        playerInfoUpdatePacket.getPlayerInfoActions().write(0, Set.of(EnumWrappers.PlayerInfoAction.ADD_PLAYER));
+        WrappedGameProfile wrappedGameProfile;
+        if (!this.playerDisguise.isOnline() || SpoofPlayerIdentity.fakeUUIDWithRealUUID.containsKey(player.getUniqueId())) {
+            wrappedGameProfile = new WrappedGameProfile(player.getUniqueId(), player.getName());
+        } else {
+            UUID uuid = SpoofPlayerIdentity.fakeUUIDWithRealUUID.getOrDefault(player.getUniqueId(), UUID.randomUUID());
+            SpoofPlayerIdentity.fakeUUIDWithRealUUID.put(player.getUniqueId(), uuid);
+            wrappedGameProfile = new WrappedGameProfile(uuid, player.getName());
+        }
+        APIResponse response = APIUtils.fetchPlayer(player.getUniqueId());
+        Skin skin = response.skin;
+        int ping = ThreadLocalRandom.current().nextInt(20, 100);
+        WrappedChatComponent displayName = WrappedChatComponent.fromText(player.getName());
+        wrappedGameProfile.getProperties().put("textures", new WrappedSignedProperty("textures", skin.getSkin(), skin.getSignature()));
+        playerInfoUpdatePacket.getPlayerInfoDataLists().write(1, List.of(new PlayerInfoData(wrappedGameProfile, ping,
+                gameMode, displayName)));
+        return playerInfoUpdatePacket;
     }
 }

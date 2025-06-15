@@ -1,6 +1,5 @@
 package org.hyperoil.playifkillers.Listeners;
 
-import com.comphenix.protocol.PacketType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;

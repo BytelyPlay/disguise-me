@@ -11,7 +11,6 @@ import org.hyperoil.playifkillers.Utils.Disguise;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 public class PlayerDisguiseCommand implements CommandExecutor {
     @Override
@@ -24,6 +23,7 @@ public class PlayerDisguiseCommand implements CommandExecutor {
                         oldDisguise.detachDisguise();
                     }
                     // TODO: let's not use this and just ping the api...
+                    // oh wait i just realized NOT USING THIS is extremely difficult HOW ELSE AM I GOING TO GET IF THE PLAYER IS ONLINE AT THE END???
                     OfflinePlayer toDisguise = Arrays.stream(Bukkit.getOfflinePlayers()).
                             filter(player -> strings[0].equalsIgnoreCase(player.getName())).
                             findFirst().
@@ -33,7 +33,7 @@ public class PlayerDisguiseCommand implements CommandExecutor {
                         return true;
                     }
                     new Disguise(p, toDisguise).enableDisguise();
-                    p.sendMessage(ChatColor.RED + "Done please rejoin.");
+                    p.sendMessage(ChatColor.RED + "Done you won't see it but for other players you are now " + toDisguise.getName() + ".");
                 } else {
                     commandSender.sendMessage(ChatColor.RED + "Please only supply one argument not more, not less");
                 }

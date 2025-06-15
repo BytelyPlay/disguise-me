@@ -7,8 +7,6 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.*;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.hyperoil.playifkillers.Utils.*;
@@ -25,7 +23,7 @@ public class SpoofPlayerIdentity extends PacketAdapter {
         ));
     }
 
-    private HashMap<UUID, UUID> fakeUUIDWithRealUUID = new HashMap<>();
+    public static HashMap<UUID, UUID> fakeUUIDWithRealUUID = new HashMap<>();
     // this is a bit of a workaround to the thing where the chat component is null for some stupid reason.
     public static HashMap<UUID, String> lastMessageOfPlayer = new HashMap<>();
 
