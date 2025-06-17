@@ -194,8 +194,10 @@ public class Disguise {
                     protocolManager.sendServerPacket(p, playerInfoRemovePacket);
                 }
                 Bukkit.getScheduler().runTaskLater(disguiseMe.getInstance(), () -> {
-                    protocolManager.sendServerPacket(p, playerInfoUpdatePacket);
-                    protocolManager.sendServerPacket(p, entitySpawnPacket);
+                    if (!p.equals(this.disguiser)) {
+                        protocolManager.sendServerPacket(p, playerInfoUpdatePacket);
+                        protocolManager.sendServerPacket(p, entitySpawnPacket);
+                    }
                 }, 1);
             }
         } else {
@@ -216,14 +218,15 @@ public class Disguise {
         ProtocolManager protocolManager = disguiseMe.getInstance().getProtocolManager();
         PacketContainer entitySpawnPacket = protocolManager.createPacket(PacketType.Play.Server.SPAWN_ENTITY);
         entitySpawnPacket.getIntegers().write(0, this.disguiser.getEntityId());
+        UUID uuid = player;
         if (SpoofPlayerIdentity.fakeUUIDWithRealUUID.containsKey(player) || PlayerHelpers.isPlayerOnline(player)) {
-            UUID uuid = SpoofPlayerIdentity.fakeUUIDWithRealUUID.get(player);
+            uuid = SpoofPlayerIdentity.fakeUUIDWithRealUUID.get(player);
             if (uuid == null) {
                 uuid = UUID.randomUUID();
                 SpoofPlayerIdentity.fakeUUIDWithRealUUID.put(player, uuid);
             }
-            entitySpawnPacket.getUUIDs().write(0, uuid);
         }
+        entitySpawnPacket.getUUIDs().write(0, uuid);
         entitySpawnPacket.getEntityTypeModifier().write(0, EntityType.PLAYER);
         Location loc = this.disguiser.getLocation();
         entitySpawnPacket.getDoubles().write(0, loc.getX());
