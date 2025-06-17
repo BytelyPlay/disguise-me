@@ -178,23 +178,24 @@ public class Disguise {
         if (disguiseType == DisguiseType.PLAYER) {
             ProtocolManager protocolManager = disguiseMe.getInstance().getProtocolManager();
             PacketContainer playerInfoRemovePacket;
-            // PacketContainer playerInfoUpdatePacket;
+            PacketContainer playerInfoUpdatePacket;
+            PacketContainer entitySpawnPacket;
             if (isDisguiseEnabled) {
                 playerInfoRemovePacket = this.getPlayerInfoRemovePacket(this.disguiser.getUniqueId());
-                // playerInfoUpdatePacket = this.getPlayerInfoUpdatePacket(this.playerDisguise, EnumWrappers.NativeGameMode.fromBukkit(disguiser.getGameMode()));
+                playerInfoUpdatePacket = this.getPlayerInfoUpdatePacket(this.playerDisguise, EnumWrappers.NativeGameMode.fromBukkit(disguiser.getGameMode()));
+                entitySpawnPacket = this.getEntitySpawnPacket(this.playerDisguise);
             } else {
                 playerInfoRemovePacket = this.getPlayerInfoRemovePacket(this.playerDisguise);
-                // playerInfoUpdatePacket = this.getPlayerInfoUpdatePacket(this.disguiser, EnumWrappers.NativeGameMode.fromBukkit(disguiser.getGameMode()));
+                playerInfoUpdatePacket = this.getPlayerInfoUpdatePacket(this.disguiser.getUniqueId(), EnumWrappers.NativeGameMode.fromBukkit(disguiser.getGameMode()));
+                entitySpawnPacket = this.getEntitySpawnPacket(this.disguiser.getUniqueId());
             }
             for (Player p : Bukkit.getOnlinePlayers()) {
-                // TODO: Make this fully packet based not just this stupidity. Oh and also so that the player himself can see his skin change and his name change in tab.
-                p.hidePlayer(disguiseMe.getInstance(), this.disguiser);
-                if (!isDisguiseEnabled && !p.equals(disguiser)) {
+                if (!p.equals(disguiser)) {
                     protocolManager.sendServerPacket(p, playerInfoRemovePacket);
                 }
                 Bukkit.getScheduler().runTaskLater(disguiseMe.getInstance(), () -> {
-                    p.showPlayer(disguiseMe.getInstance(), this.disguiser);
-                    // protocolManager.sendServerPacket(p, playerInfoUpdatePacket);
+                    protocolManager.sendServerPacket(p, playerInfoUpdatePacket);
+                    protocolManager.sendServerPacket(p, entitySpawnPacket);
                 }, 1);
             }
         } else {
@@ -210,6 +211,25 @@ public class Disguise {
             playerInfoRemovePacket.getUUIDLists().write(0, List.of(SpoofPlayerIdentity.fakeUUIDWithRealUUID.get(player)));
         }
         return playerInfoRemovePacket;
+    }
+    private PacketContainer getEntitySpawnPacket(@NotNull UUID player) {
+        ProtocolManager protocolManager = disguiseMe.getInstance().getProtocolManager();
+        PacketContainer entitySpawnPacket = protocolManager.createPacket(PacketType.Play.Server.SPAWN_ENTITY);
+        entitySpawnPacket.getIntegers().write(0, this.disguiser.getEntityId());
+        if (SpoofPlayerIdentity.fakeUUIDWithRealUUID.containsKey(player) || PlayerHelpers.isPlayerOnline(player)) {
+            UUID uuid = SpoofPlayerIdentity.fakeUUIDWithRealUUID.get(player);
+            if (uuid == null) {
+                uuid = UUID.randomUUID();
+                SpoofPlayerIdentity.fakeUUIDWithRealUUID.put(player, uuid);
+            }
+            entitySpawnPacket.getUUIDs().write(0, uuid);
+        }
+        entitySpawnPacket.getEntityTypeModifier().write(0, EntityType.PLAYER);
+        Location loc = this.disguiser.getLocation();
+        entitySpawnPacket.getDoubles().write(0, loc.getX());
+        entitySpawnPacket.getDoubles().write(1, loc.getY());
+        entitySpawnPacket.getDoubles().write(2, loc.getZ());
+        return entitySpawnPacket;
     }
     private PacketContainer getPlayerInfoUpdatePacket(@NotNull UUID player, @NotNull EnumWrappers.NativeGameMode gameMode) {
         APIResponse response = APIUtils.fetchPlayer(player);
@@ -228,7 +248,7 @@ public class Disguise {
             SpoofPlayerIdentity.fakeUUIDWithRealUUID.put(player, uuid);
             wrappedGameProfile = new WrappedGameProfile(uuid, response.username);
         }
-        Skin skin = null;
+        Skin skin = response.skin;
         int ping = ThreadLocalRandom.current().nextInt(20, 100);
         WrappedChatComponent displayName = WrappedChatComponent.fromText(response.username);
         wrappedGameProfile.getProperties().put("textures", new WrappedSignedProperty("textures", skin.getSkin(), skin.getSignature()));
