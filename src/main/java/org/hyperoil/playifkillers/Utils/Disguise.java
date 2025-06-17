@@ -25,10 +25,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Disguise {
-    private static HashMap<UUID, Disguise> playerUUIDAndDisguise = new HashMap<>();
+    private static ConcurrentHashMap<UUID, Disguise> playerUUIDAndDisguise = new ConcurrentHashMap<>();
     public final int disguiseType;
     public final OfflinePlayer playerDisguise;
     public final Player disguiser;

@@ -24,6 +24,7 @@ public class PlayerDisguiseCommand implements CommandExecutor {
                     }
                     // TODO: let's not use this and just ping the api...
                     // oh wait i just realized NOT USING THIS is extremely difficult HOW ELSE AM I GOING TO GET IF THE PLAYER IS ONLINE AT THE END???
+                    // You can just check if anybody online has the username of that player specified...
                     OfflinePlayer toDisguise = Arrays.stream(Bukkit.getOfflinePlayers()).
                             filter(player -> strings[0].equalsIgnoreCase(player.getName())).
                             findFirst().

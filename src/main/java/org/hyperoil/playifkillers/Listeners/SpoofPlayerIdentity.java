@@ -13,6 +13,7 @@ import org.hyperoil.playifkillers.Utils.*;
 import org.hyperoil.playifkillers.disguiseMe;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SpoofPlayerIdentity extends PacketAdapter {
     public SpoofPlayerIdentity() {
@@ -23,9 +24,9 @@ public class SpoofPlayerIdentity extends PacketAdapter {
         ));
     }
 
-    public static HashMap<UUID, UUID> fakeUUIDWithRealUUID = new HashMap<>();
+    public static ConcurrentHashMap<UUID, UUID> fakeUUIDWithRealUUID = new ConcurrentHashMap<>();
     // this is a bit of a workaround to the thing where the chat component is null for some stupid reason.
-    public static HashMap<UUID, String> lastMessageOfPlayer = new HashMap<>();
+    public static ConcurrentHashMap<UUID, String> lastMessageOfPlayer = new ConcurrentHashMap<>();
 
     @Override
     public void onPacketSending(PacketEvent event) {

@@ -11,6 +11,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class APIUtils {
     // TODO: figure out how to use the official mojang api(s) instead of the playerdb.co (problem i need the skin signature)
@@ -19,8 +20,8 @@ public class APIUtils {
             followRedirects(HttpClient.Redirect.NEVER).
             build();
     private static ObjectMapper objectMapper = new ObjectMapper();
-    private static HashMap<UUID, APIResponse> responseCache = new HashMap<>();
-    private static HashMap<String, UUID> UUIDCache = new HashMap<>();
+    private static ConcurrentHashMap<UUID, APIResponse> responseCache = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, UUID> UUIDCache = new ConcurrentHashMap<>();
     public static APIResponse fetchPlayer(UUID uuid) {
         if (responseCache.containsKey(uuid)) {
             return responseCache.get(uuid);
