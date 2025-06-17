@@ -76,7 +76,7 @@ public class SpoofPlayerIdentity extends PacketAdapter {
     }
 
     private void handlePlayerInfoInitializeChat(PacketEvent e) {
-        // could be good if i figure it out
+        // TODO: figure this out
         /* PacketContainer packet = e.getPacket();
         WrappedGameProfile gameProfile = packet.getGameProfiles().read(1);
         UUID uuid = gameProfile.getUUID();
@@ -105,12 +105,15 @@ public class SpoofPlayerIdentity extends PacketAdapter {
             UUID uuid = gameProfile.getUUID();
             Disguise dis = Disguise.getDisguise(uuid);
             if (dis != null) {
-                UUID disguiseUUID = dis.playerDisguise.getUniqueId();
+                UUID disguiseUUID = dis.playerDisguise;
                 APIResponse response = APIUtils.fetchPlayer(disguiseUUID);
+                if (response == null) {
+                    return playerInfoData;
+                }
                 Skin skin = response.skin;
-                String disguiseUsername = dis.playerDisguise.getName();
+                String disguiseUsername = response.username;
                 if (dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled()) {
-                    if (dis.playerDisguise.isOnline() || fakeUUIDWithRealUUID.containsKey(uuid)) {
+                    if (PlayerHelpers.isPlayerOnline(dis.playerDisguise) || fakeUUIDWithRealUUID.containsKey(uuid)) {
                         if (fakeUUIDWithRealUUID.get(uuid) == null) fakeUUIDWithRealUUID.put(uuid, UUID.randomUUID());
                         WrappedGameProfile disguiseProfile = new WrappedGameProfile(fakeUUIDWithRealUUID.getOrDefault(uuid, fakeUUIDWithRealUUID.get(uuid)),
                                 disguiseUsername);
@@ -118,9 +121,11 @@ public class SpoofPlayerIdentity extends PacketAdapter {
                             Bukkit.getLogger().severe("skin == null handlePlayerInfoDataLists");
                         }
                         disguiseProfile.getProperties().put("textures", new WrappedSignedProperty("textures", skin.getSkin(), skin.getSignature()));
-                        playerInfoDataResult.add(new PlayerInfoData(disguiseProfile, playerInfoDataloop.getLatency(), playerInfoDataloop.getGameMode(), WrappedChatComponent.fromText(dis.playerDisguise.getName())));
+                        playerInfoDataResult.add(new PlayerInfoData(disguiseProfile, playerInfoDataloop.getLatency(),
+                                playerInfoDataloop.getGameMode(),
+                                WrappedChatComponent.fromText(response.username)));
                     } else {
-                        WrappedGameProfile disguiseProfile = new WrappedGameProfile(fakeUUIDWithRealUUID.getOrDefault(uuid, dis.playerDisguise.getUniqueId()),
+                        WrappedGameProfile disguiseProfile = new WrappedGameProfile(fakeUUIDWithRealUUID.getOrDefault(uuid, dis.playerDisguise),
                                 disguiseUsername);
                         if (skin == null) {
                             Bukkit.getLogger().severe("skin == null handlePlayerInfoDataLists");
@@ -149,8 +154,12 @@ public class SpoofPlayerIdentity extends PacketAdapter {
         Disguise dis = Disguise.getDisguise(p);
         if (dis != null) {
             if (dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled()) {
-                packet.getGameProfiles().write(0, WrappedGameProfile.fromOfflinePlayer(dis.playerDisguise));
-                packet.getStrings().write(0, dis.playerDisguise.getName());
+                APIResponse response = APIUtils.fetchPlayer(dis.playerDisguise);
+                if (response == null) {
+                    return;
+                }
+                packet.getGameProfiles().write(0, new WrappedGameProfile(dis.playerDisguise, response.username));
+                packet.getStrings().write(0, response.username);
             }
         }
     }
@@ -160,11 +169,11 @@ public class SpoofPlayerIdentity extends PacketAdapter {
         UUID playerUUID = packet.getUUIDs().read(0);
         Disguise dis = Disguise.getDisguise(playerUUID);
         if (dis != null && dis.isDisguiseEnabled() && dis.disguiseType == DisguiseType.PLAYER) {
-            if (dis.playerDisguise.isOnline()) {
+            if (PlayerHelpers.isPlayerOnline(dis.playerDisguise)) {
                 if (fakeUUIDWithRealUUID.get(playerUUID) == null) fakeUUIDWithRealUUID.put(playerUUID, UUID.randomUUID());
                 packet.getUUIDs().write(0, fakeUUIDWithRealUUID.getOrDefault(playerUUID, UUID.randomUUID()));
             } else {
-                packet.getUUIDs().write(0, dis.playerDisguise.getUniqueId());
+                packet.getUUIDs().write(0, dis.playerDisguise);
             }
         }
     }

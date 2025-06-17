@@ -31,7 +31,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Disguise {
     private static ConcurrentHashMap<UUID, Disguise> playerUUIDAndDisguise = new ConcurrentHashMap<>();
     public final int disguiseType;
-    public final OfflinePlayer playerDisguise;
+    public final UUID playerDisguise;
     public final Player disguiser;
     public final EntityType entityType;
     private Boolean isDisguiseEnabled = false;
@@ -58,10 +58,10 @@ public class Disguise {
         disguiseTeam.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
     }
 
-    public Disguise(@NotNull Player p, @NotNull OfflinePlayer player)  {
+    public Disguise(@NotNull Player p, @NotNull UUID disguiseAs)  {
         playerUUIDAndDisguise.put(p.getUniqueId(), this);
         disguiseType=DisguiseType.PLAYER;
-        playerDisguise = player;
+        playerDisguise = disguiseAs;
         entityType = null;
         disguiser=p;
         disguiseTeam = null;
@@ -180,7 +180,7 @@ public class Disguise {
             PacketContainer playerInfoRemovePacket;
             // PacketContainer playerInfoUpdatePacket;
             if (isDisguiseEnabled) {
-                playerInfoRemovePacket = this.getPlayerInfoRemovePacket(this.disguiser);
+                playerInfoRemovePacket = this.getPlayerInfoRemovePacket(this.disguiser.getUniqueId());
                 // playerInfoUpdatePacket = this.getPlayerInfoUpdatePacket(this.playerDisguise, EnumWrappers.NativeGameMode.fromBukkit(disguiser.getGameMode()));
             } else {
                 playerInfoRemovePacket = this.getPlayerInfoRemovePacket(this.playerDisguise);
@@ -201,32 +201,36 @@ public class Disguise {
             Bukkit.getLogger().warning("Tried to call sendUpdatePackets in a non-player disguise.");
         }
     }
-    private PacketContainer getPlayerInfoRemovePacket(OfflinePlayer player) {
+    private PacketContainer getPlayerInfoRemovePacket(@NotNull UUID player) {
         ProtocolManager protocolManager = disguiseMe.getInstance().getProtocolManager();
         PacketContainer playerInfoRemovePacket = protocolManager.createPacket(PacketType.Play.Server.PLAYER_INFO_REMOVE);
-        if (!SpoofPlayerIdentity.fakeUUIDWithRealUUID.containsKey(player.getUniqueId()) || player == this.disguiser) {
-            playerInfoRemovePacket.getUUIDLists().write(0, List.of(player.getUniqueId()));
+        if (!SpoofPlayerIdentity.fakeUUIDWithRealUUID.containsKey(player) || player == this.disguiser.getUniqueId()) {
+            playerInfoRemovePacket.getUUIDLists().write(0, List.of(player));
         } else {
-            playerInfoRemovePacket.getUUIDLists().write(0, List.of(SpoofPlayerIdentity.fakeUUIDWithRealUUID.get(player.getUniqueId())));
+            playerInfoRemovePacket.getUUIDLists().write(0, List.of(SpoofPlayerIdentity.fakeUUIDWithRealUUID.get(player)));
         }
         return playerInfoRemovePacket;
     }
-    private PacketContainer getPlayerInfoUpdatePacket(OfflinePlayer player, EnumWrappers.NativeGameMode gameMode) {
+    private PacketContainer getPlayerInfoUpdatePacket(@NotNull UUID player, @NotNull EnumWrappers.NativeGameMode gameMode) {
+        APIResponse response = APIUtils.fetchPlayer(player);
+        if (response == null) {
+            Bukkit.getLogger().severe("response is null cannot continue dynamically updating player");
+            return null;
+        }
         ProtocolManager protocolManager = disguiseMe.getInstance().getProtocolManager();
         PacketContainer playerInfoUpdatePacket = protocolManager.createPacket(PacketType.Play.Server.PLAYER_INFO);
         playerInfoUpdatePacket.getPlayerInfoActions().write(0, Set.of(EnumWrappers.PlayerInfoAction.ADD_PLAYER));
         WrappedGameProfile wrappedGameProfile;
-        if (!this.playerDisguise.isOnline() || SpoofPlayerIdentity.fakeUUIDWithRealUUID.containsKey(player.getUniqueId())) {
-            wrappedGameProfile = new WrappedGameProfile(player.getUniqueId(), player.getName());
+        if (!PlayerHelpers.isPlayerOnline(this.playerDisguise) || SpoofPlayerIdentity.fakeUUIDWithRealUUID.containsKey(player)) {
+            wrappedGameProfile = new WrappedGameProfile(player, response.username);
         } else {
-            UUID uuid = SpoofPlayerIdentity.fakeUUIDWithRealUUID.getOrDefault(player.getUniqueId(), UUID.randomUUID());
-            SpoofPlayerIdentity.fakeUUIDWithRealUUID.put(player.getUniqueId(), uuid);
-            wrappedGameProfile = new WrappedGameProfile(uuid, player.getName());
+            UUID uuid = SpoofPlayerIdentity.fakeUUIDWithRealUUID.getOrDefault(player, UUID.randomUUID());
+            SpoofPlayerIdentity.fakeUUIDWithRealUUID.put(player, uuid);
+            wrappedGameProfile = new WrappedGameProfile(uuid, response.username);
         }
-        APIResponse response = APIUtils.fetchPlayer(player.getUniqueId());
-        Skin skin = response.skin;
+        Skin skin = null;
         int ping = ThreadLocalRandom.current().nextInt(20, 100);
-        WrappedChatComponent displayName = WrappedChatComponent.fromText(player.getName());
+        WrappedChatComponent displayName = WrappedChatComponent.fromText(response.username);
         wrappedGameProfile.getProperties().put("textures", new WrappedSignedProperty("textures", skin.getSkin(), skin.getSignature()));
         playerInfoUpdatePacket.getPlayerInfoDataLists().write(1, List.of(new PlayerInfoData(wrappedGameProfile, ping,
                 gameMode, displayName)));

@@ -2,6 +2,8 @@ package org.hyperoil.playifkillers.Hooks;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
+import org.hyperoil.playifkillers.Utils.APIResponse;
+import org.hyperoil.playifkillers.Utils.APIUtils;
 import org.hyperoil.playifkillers.Utils.Disguise;
 import org.hyperoil.playifkillers.Utils.DisguiseType;
 import org.hyperoil.playifkillers.disguiseMe;
@@ -29,7 +31,11 @@ public class PAPIHook extends PlaceholderExpansion {
         if (params.equals("username")) {
             Disguise dis = Disguise.getDisguise(player.getUniqueId());
             if (dis != null && dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled()) {
-                return dis.playerDisguise.getName();
+                APIResponse response = APIUtils.fetchPlayer(dis.playerDisguise);
+                if (response == null) {
+                    return "NO_API_RESPONSE";
+                }
+                return response.username;
             } else {
                 return player.getName();
             }

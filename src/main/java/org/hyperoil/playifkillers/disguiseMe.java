@@ -42,7 +42,6 @@ public final class disguiseMe extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new NoEntityTargetting(), this);
         getServer().getPluginManager().registerEvents(new LastMessageTracker(), this);
         protocolManager.addPacketListener(new SpoofPlayerIdentity());
-        APIUtils.initCache();
         Bukkit.getLogger().info("Plugin Enabled.");
     }
 

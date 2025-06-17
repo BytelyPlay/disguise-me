@@ -1,5 +1,5 @@
 name: DisguiseMe
-version: '1.0'
+version: '1.1'
 main: org.hyperoil.playifkillers.disguiseMe
 api-version: '1.21'
 softdepend: ["PlaceholderAPI"]

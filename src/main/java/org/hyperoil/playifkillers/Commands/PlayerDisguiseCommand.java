@@ -7,7 +7,10 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.hyperoil.playifkillers.Utils.APIResponse;
+import org.hyperoil.playifkillers.Utils.APIUtils;
 import org.hyperoil.playifkillers.Utils.Disguise;
+import org.hyperoil.playifkillers.disguiseMe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -22,19 +25,18 @@ public class PlayerDisguiseCommand implements CommandExecutor {
                     if (oldDisguise != null) {
                         oldDisguise.detachDisguise();
                     }
-                    // TODO: let's not use this and just ping the api...
-                    // oh wait i just realized NOT USING THIS is extremely difficult HOW ELSE AM I GOING TO GET IF THE PLAYER IS ONLINE AT THE END???
-                    // You can just check if anybody online has the username of that player specified...
-                    OfflinePlayer toDisguise = Arrays.stream(Bukkit.getOfflinePlayers()).
-                            filter(player -> strings[0].equalsIgnoreCase(player.getName())).
-                            findFirst().
-                            orElse(null);
-                    if (toDisguise == null) {
-                        p.sendMessage(ChatColor.RED + "This is awkward... I can't find that player.");
-                        return true;
-                    }
-                    new Disguise(p, toDisguise).enableDisguise();
-                    p.sendMessage(ChatColor.RED + "Done you won't see it but for other players you are now " + toDisguise.getName() + ".");
+                    Bukkit.getScheduler().runTaskAsynchronously(disguiseMe.getInstance(), () -> {
+                        APIResponse response = APIUtils.fetchPlayer(strings[0]);
+                        Bukkit.getScheduler().runTask(disguiseMe.getInstance(), () -> {
+                            if (response == null) {
+                                p.sendMessage(ChatColor.RED + "This is awkward... I can't find that player.");
+                                return;
+                            }
+                            new Disguise(p, response.ID).enableDisguise();
+                            p.sendMessage(ChatColor.RED + "Done you won't see it but for other players you are now " + response.username + ".");
+                        });
+                    });
+                    return true;
                 } else {
                     commandSender.sendMessage(ChatColor.RED + "Please only supply one argument not more, not less");
                 }

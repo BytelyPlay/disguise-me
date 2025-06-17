@@ -2,6 +2,8 @@ package org.hyperoil.playifkillers.Utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.bukkit.Bukkit;
 import org.hyperoil.playifkillers.disguiseMe;
 
@@ -9,6 +11,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,11 +23,16 @@ public class APIUtils {
             followRedirects(HttpClient.Redirect.NEVER).
             build();
     private static ObjectMapper objectMapper = new ObjectMapper();
-    private static ConcurrentHashMap<UUID, APIResponse> responseCache = new ConcurrentHashMap<>();
-    private static ConcurrentHashMap<String, UUID> UUIDCache = new ConcurrentHashMap<>();
+    private static Cache<UUID, APIResponse> responseCache = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofDays(1))
+            .build();
+    private static Cache<String, UUID> UUIDCache = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofDays(1))
+            .build();
     public static APIResponse fetchPlayer(UUID uuid) {
-        if (responseCache.containsKey(uuid)) {
-            return responseCache.get(uuid);
+        APIResponse cached = responseCache.getIfPresent(uuid);
+        if (cached != null) {
+            return cached;
         }
         HttpRequest httpRequest = HttpRequest.newBuilder(URI.create(String.format(UUID_API, uuid.toString()))).
                 GET().
@@ -49,8 +57,9 @@ public class APIUtils {
         }
     }
     public static APIResponse fetchPlayer(String username) {
-        if (UUIDCache.containsKey(username)) {
-            return fetchPlayer(UUIDCache.get(username));
+        UUID cached = UUIDCache.getIfPresent(username);
+        if (cached != null) {
+            return fetchPlayer(cached);
         }
         HttpRequest httpRequest = HttpRequest.newBuilder(URI.create(String.format(UUID_API, username))).
                 GET().
@@ -73,10 +82,5 @@ public class APIUtils {
             e.printStackTrace();
             return null;
         }
-    }
-    public static void initCache() {
-        Bukkit.getScheduler().runTaskTimer(disguiseMe.getInstance(), () -> {
-            responseCache.clear();
-        }, 12000, 12000);
     }
 }
