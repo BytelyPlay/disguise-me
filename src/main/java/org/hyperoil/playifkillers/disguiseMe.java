@@ -2,6 +2,8 @@ package org.hyperoil.playifkillers;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import com.github.retrooper.packetevents.PacketEvents;
+import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -15,12 +17,18 @@ import org.hyperoil.playifkillers.Utils.Disguise;
 
 public final class disguiseMe extends JavaPlugin {
     private static disguiseMe instance;
-    private ProtocolManager protocolManager;
     private static PAPIHook papiHook;
+
+    @Override
+    public void onLoad() {
+        PacketEvents.getAPI().load();
+    }
+
     @Override
     public void onEnable() {
         instance=this;
-        protocolManager = ProtocolLibrary.getProtocolManager();
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
+        PacketEvents.getAPI().init();
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             Bukkit.getLogger().info("Found placeholderapi initializing hook.");
             if (papiHook == null) {
@@ -41,12 +49,13 @@ public final class disguiseMe extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new EntityDamageEventForDisguise(), this);
         getServer().getPluginManager().registerEvents(new NoEntityTargetting(), this);
         getServer().getPluginManager().registerEvents(new LastMessageTracker(), this);
-        protocolManager.addPacketListener(new SpoofPlayerIdentity());
+        PacketEvents.getAPI().getEventManager().registerListener(new SpoofPlayerIdentity());
         Bukkit.getLogger().info("Plugin Enabled.");
     }
 
     @Override
     public void onDisable() {
+        PacketEvents.getAPI().terminate();
         for (Disguise disguise : Disguise.getAllDisguises()) {
             disguise.detachDisguise();
         }
@@ -63,8 +72,5 @@ public final class disguiseMe extends JavaPlugin {
 
     public static disguiseMe getInstance() {
         return instance;
-    }
-    public ProtocolManager getProtocolManager() {
-        return protocolManager;
     }
 }
