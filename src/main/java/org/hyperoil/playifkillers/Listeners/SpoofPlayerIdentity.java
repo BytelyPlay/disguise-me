@@ -1,20 +1,17 @@
 package org.hyperoil.playifkillers.Listeners;
 
 import com.github.retrooper.packetevents.event.PacketListener;
-import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
-import com.github.retrooper.packetevents.protocol.player.GameMode;
 import com.github.retrooper.packetevents.protocol.player.TextureProperty;
+import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.protocol.player.UserProfile;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate;
+import com.github.retrooper.packetevents.wrapper.play.server.*;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.hyperoil.playifkillers.Utils.*;
-import org.hyperoil.playifkillers.disguiseMe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -29,35 +26,27 @@ public class SpoofPlayerIdentity implements PacketListener {
         PacketTypeCommon packetType = event.getPacketType();
         if (packetType == PacketType.Play.Server.PLAYER_INFO) {
             handlePlayerInfoPacket(event);
-        } else if (packetType == PacketType.Play.Server.SPAWN_ENTITY) {
-            handleEntitySpawnPacket(event);
+        } else if (packetType == PacketType.Play.Server.SPAWN_PLAYER) {
+            handlePlayerSpawnPacket(event);
         } else if (packetType == PacketType.Play.Server.CHAT_MESSAGE) {
             this.handlePlayerChatPacket(event);
         }
     }
 
     private void handlePlayerChatPacket(PacketSendEvent e) {
-        PacketContainer packet = e.getPacket();
-        ProtocolManager protocolManager = disguiseMe.getInstance().getProtocolManager();
-        UUID sender = packet.getUUIDs().read(0);
+        WrapperPlayServerChatMessage packet = new WrapperPlayServerChatMessage(e);
+        User user = e.getUser();
+        UUID sender = user.getUUID();
         Disguise dis = Disguise.getDisguise(sender);
         if (dis != null && dis.disguiseType == DisguiseType.PLAYER && dis.isDisguiseEnabled()) {
-            PacketContainer PacketToBeSent = protocolManager.createPacket(PacketType.Play.Server.SYSTEM_CHAT);
-            WrappedChatComponent chatComponent = packet.getChatComponents().read(0);
-            if (chatComponent != null) {
-                PacketToBeSent.getChatComponents().write(0, chatComponent);
-            } else {
-                String message = lastMessageOfPlayer.get(sender);
-                if (message == null) {
-                    Bukkit.getLogger().severe("Cannot properly send a chat message that a disguised player wants to send as chatComponent == null and the backup last message is null");
-                    return;
-                } else {
-                    PacketToBeSent.getChatComponents().write(0, WrappedChatComponent.fromText(message));
-                }
-            }
-            e.setPacket(PacketToBeSent);
+            e.setCancelled(true);
+            Component chatComponent = packet.getMessage().getChatContent();
+            WrapperPlayServerSystemChatMessage packetToBeSent = new WrapperPlayServerSystemChatMessage(
+                    false,
+                    chatComponent
+            );
+            user.sendPacket(packetToBeSent);
         }
-        e.markForReEncode(true);
     }
 
     private void handlePlayerInfoPacket(PacketSendEvent event) {
@@ -180,16 +169,16 @@ public class SpoofPlayerIdentity implements PacketListener {
         packet.setEntries(updatedEntries);
     }
 
-    private void handleEntitySpawnPacket(PacketSendEvent event) {
-        PacketContainer packet = event.getPacket();
-        UUID playerUUID = packet.getUUIDs().read(0);
+    private void handlePlayerSpawnPacket(PacketSendEvent event) {
+        WrapperPlayServerSpawnPlayer packet = new WrapperPlayServerSpawnPlayer(event);
+        UUID playerUUID = packet.getUUID();
         Disguise dis = Disguise.getDisguise(playerUUID);
         if (dis != null && dis.isDisguiseEnabled() && dis.disguiseType == DisguiseType.PLAYER) {
             if (PlayerHelpers.isPlayerOnline(dis.playerDisguise)) {
                 if (fakeUUIDWithRealUUID.get(playerUUID) == null) fakeUUIDWithRealUUID.put(playerUUID, UUID.randomUUID());
-                packet.getUUIDs().write(0, fakeUUIDWithRealUUID.getOrDefault(playerUUID, UUID.randomUUID()));
+                packet.setUUID(fakeUUIDWithRealUUID.getOrDefault(playerUUID, UUID.randomUUID()));
             } else {
-                packet.getUUIDs().write(0, dis.playerDisguise);
+                packet.setUUID(dis.playerDisguise);
             }
         }
     }

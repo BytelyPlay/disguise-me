@@ -1,8 +1,7 @@
 package org.hyperoil.playifkillers;
 
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
 import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -49,7 +48,7 @@ public final class disguiseMe extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new EntityDamageEventForDisguise(), this);
         getServer().getPluginManager().registerEvents(new NoEntityTargetting(), this);
         getServer().getPluginManager().registerEvents(new LastMessageTracker(), this);
-        PacketEvents.getAPI().getEventManager().registerListener(new SpoofPlayerIdentity());
+        PacketEvents.getAPI().getEventManager().registerListener(new SpoofPlayerIdentity(), PacketListenerPriority.NORMAL);
         Bukkit.getLogger().info("Plugin Enabled.");
     }
 

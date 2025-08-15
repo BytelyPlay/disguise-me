@@ -1,9 +1,5 @@
 package org.hyperoil.playifkillers.Utils;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.wrappers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -85,7 +81,7 @@ public class Disguise {
             disguiseTeam.addEntry(disguiser.getName());
             disguiseTask = createDisguiseTask();
         } else if (disguiseType == DisguiseType.PLAYER) {
-            this.sendUpdatePackets();
+            // this.sendUpdatePackets();
         }
     }
 
@@ -143,7 +139,7 @@ public class Disguise {
                 }
             }
         } else if (disguiseType == DisguiseType.PLAYER) {
-            this.sendUpdatePackets();
+            // this.sendUpdatePackets();
         }
     }
 
@@ -173,7 +169,8 @@ public class Disguise {
         return this.disguiseEntity;
     }
 
-    private void sendUpdatePackets() {
+    // TODO
+    /* private void sendUpdatePackets() {
         // TODO: Hey, forgot to update this at the time but I think this doesn't work yet so uh Make it work... also i didn't test the latest version with a one tick separation so that should be tested.
         if (disguiseType == DisguiseType.PLAYER) {
             ProtocolManager protocolManager = disguiseMe.getInstance().getProtocolManager();
@@ -258,5 +255,5 @@ public class Disguise {
         playerInfoUpdatePacket.getPlayerInfoDataLists().write(1, List.of(new PlayerInfoData(wrappedGameProfile, ping,
                 gameMode, displayName)));
         return playerInfoUpdatePacket;
-    }
+    } */
 }
